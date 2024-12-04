@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
+const { Schema } = mongoose;
 
-const listingSchema = new mongoose.Schema({
+
+const listingSchema = new Schema({
     title: {
         type: String,
         required: true
@@ -18,18 +20,17 @@ const listingSchema = new mongoose.Schema({
         required: true
     },
     author: {
-        type: [{type: objectId, ref: Users}],
+        type: {type: mongoose.Schema.ObjectId, ref: 'User', required: true},
+    },
+    messages: {
+        type: [{type: mongoose.Schema.ObjectId, ref: 'Message'}],
         required: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
     }
-});
+    }, 
+    {
+        timestamps: true
+    }
+);
 
 const Comment = mongoose.model('Listing', listingSchema);
 module.exports = Listing;

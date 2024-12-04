@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+const { Schema } = mongoose;
 
-const messageSchema = new mongoose.Schema({
+const messageSchema = new Schema({
     content: {
         type: String,
         required: true
@@ -8,24 +9,23 @@ const messageSchema = new mongoose.Schema({
     sender: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+        required: true
     },
     receiver: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true
     },
     listing: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Listing'
+        ref: 'Listing',
+        required: true
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
     },
-    updatedAt: {
-        type: Date,
-        default: Date.now
+    {
+        timestamps: true
     }
-});
+);
 
 const Comment = mongoose.model('Message', messageSchema);
 module.exports = Listing;
