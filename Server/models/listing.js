@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose')
 const { Schema } = mongoose;
 
 
@@ -12,11 +12,11 @@ const listingSchema = new Schema({
         required: true
     },
     price: {
-        type: int,
+        type: Number,
         required: true
     },
-    photo: {
-        type: String,
+    images: {
+        type: [String],
         required: true
     },
     author: {
@@ -24,13 +24,16 @@ const listingSchema = new Schema({
     },
     messages: {
         type: [{type: mongoose.Schema.ObjectId, ref: 'Message'}],
-        required: true
-    }
+    },
+    isAvailable: {
+        type: Boolean,
+        default: true
+    },
     }, 
     {
         timestamps: true
     }
 );
 
-const Comment = mongoose.model('Listing', listingSchema);
+const Listing = mongoose.model('Listing', listingSchema);
 module.exports = Listing;

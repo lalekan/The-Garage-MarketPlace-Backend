@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose')
 const { Schema } = mongoose;
 
 const messageSchema = new Schema({
@@ -6,26 +6,27 @@ const messageSchema = new Schema({
         type: String,
         required: true
     },
-    sender: {
+    senderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    receiver: {
+    receiverId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    listing: {
+    listingId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Listing',
         required: true
     },
+    deletedBy: { type: Array, default: [] },
     },
     {
         timestamps: true
     }
 );
 
-const Comment = mongoose.model('Message', messageSchema);
-module.exports = Listing;
+const Message = mongoose.model('Message', messageSchema)
+module.exports = Message

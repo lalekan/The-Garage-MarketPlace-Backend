@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose')
 const {Schema} = mongoose
 
 const userSchema = new Schema({
@@ -16,9 +16,13 @@ const userSchema = new Schema({
         required: true,
         unique: true
     },
-    posts: [{
+    listings: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Listing',
+    }],
+    messages: [{ 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Message' 
     }],
 },
     {timestamps: true}
