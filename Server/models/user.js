@@ -16,10 +16,16 @@ const userSchema = new Schema({
         required: true,
         unique: true
     },
+    image: {
+        type: String
+    },
     listings: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Listing',
     }],
+    bio: {
+        type: Text
+    },
     messages: [{ 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Message' 

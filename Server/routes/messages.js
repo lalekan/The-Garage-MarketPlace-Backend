@@ -3,9 +3,6 @@ const { authMiddleware } = require('../controllers/auth')
 const { editMessage, deleteMessage } = require('../controllers/message')
 const Message = require('../models/message')
 const Listing = require('../models/listing')
-const User = require('../models/user')
-const isAuthenticated = require('../middleware/auth'); // Assuming this middleware checks user authentication
-
 const mongoose = require('mongoose')
 
 const router = express.Router()
@@ -74,64 +71,69 @@ router.get('/inbox', authMiddleware, async (req, res) => {
 
 // Edit a Message
 router.put('/:id', authMiddleware, async (req, res) => {
-    const { id } = req.params
-    const { content } = req.body
-  
-    try {
-      // Validate message ID
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'Invalid message ID' })
-      }
-  
-      // Find message and ensure the user is authorized to edit
-      const message = await Message.findById(id)
-      if (!message) {
-        return res.status(404).json({ message: 'Message not found' })
-      }
-      if (message.senderId.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'You can only edit messages you sent' })
-      }
-  
-      // Update content
-      message.content = content
+  const { id } = req.params
+  const { content } = req.body
+
+  try {
+    // Validate message ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid message ID' })
+    }
+
+    // Find message and ensure the user is authorized to edit
+    const message = await Message.findById(id)
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' })
+    }
+    if (message.senderId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only edit messages you sent' })
+    }
+
+    // Update content
+    message.content = content
+    await message.save()
+
+    res.json({ message: 'Message updated successfully', message })
+  } catch (error) {
+    console.error('Error editing message:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Delete a Message (Soft Delete)
+router.delete('/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params
+
+  try {
+    // Validate message ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid message ID' })
+    }
+
+    // Find message and ensure the user is authorized to delete
+    const message = await Message.findById(id)
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' })
+    }
+    if (
+      message.senderId.toString() !== req.user._id.toString() &&
+      message.receiverId.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({ message: 'You can only delete messages you are part of' })
+    }
+
+    // Implement soft delete by adding user ID to deletedBy array
+    if (!message.deletedBy.includes(req.user._id.toString())) {
+      message.deletedBy.push(req.user._id)
       await message.save()
-  
-      res.json({ message: 'Message updated successfully', message })
-    } catch (error) {
-      console.error('Error editing message:', error)
-      res.status(500).json({ message: 'Server error' })
-    }
-  })
-  
-  // Delete a Message
-  router.delete('/:id', authMiddleware, async (req, res) => {
-    const { id } = req.params
-  
-    try {
-      // Validate message ID
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'Invalid message ID' })
-      }
-  
-      // Find message and ensure the user is authorized to delete
-      const message = await Message.findById(id)
-      if (!message) {
-        return res.status(404).json({ message: 'Message not found' })
-      }
-      if (
-        message.senderId.toString() !== req.user._id.toString() &&
-        message.receiverId.toString() !== req.user._id.toString()
-      ) {
-        return res.status(403).json({ message: 'You can only delete messages you are part of' })
-      }
-  
-      await message.remove()
-  
       res.json({ message: 'Message deleted successfully' })
-    } catch (error) {
-      console.error('Error deleting message:', error)
-      res.status(500).json({ message: 'Server error' })
+    } else {
+      res.status(400).json({ message: 'Message already deleted' })
     }
-  })
+  } catch (error) {
+    console.error('Error deleting message:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
 
 module.exports = router

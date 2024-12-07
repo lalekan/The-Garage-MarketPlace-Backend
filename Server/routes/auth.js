@@ -1,22 +1,21 @@
-const express = require('express')
-const {registerUser, loginUser, getUserProfile, updateUserProfile, deleteUserAccount  } = require('../controllers/auth')
-const { authMiddleware } = require('../middleware/auth')
+const router = require('express').Router()
+const controller = require('../controllers/auth')
+const middleware = require('../middleware/auth')
 
-const router = express.Router()
-
-// POST /register
-router.post('/register', registerUser)
-
-// POST /login
-router.post('/login', loginUser)
-
-// Fetch user profile (protected route)
-router.get('/profile', authMiddleware, getUserProfile)
-
-// Update user profile (protected route)
-router.put('/profile', authMiddleware, updateUserProfile);
-
-// Delete user account (protected route)
-router.delete('/profile', authMiddleware, deleteUserAccount);
+router.post('/login', controller.loginUser)
+router.post('/register', controller.registerUser)
+router.put(
+  '/update/:user_id',
+  middleware.stripToken,
+  middleware.verifyToken,
+  controller.updatePassword,
+  controller.updateUserProfile
+)
+router.get(
+  '/session',
+  middleware.stripToken,
+  middleware.verifyToken,
+  controller.checkSession
+)
 
 module.exports = router

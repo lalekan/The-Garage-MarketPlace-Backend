@@ -14,19 +14,26 @@ dotenv.config()
 const app = express()
 
 // Middleware
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+}))
 app.use(express.json())
-app.use(cors())
+
 
 // Use auth route
-app.use('/api/auth', authRoutes)
-app.use('/api/listings', listingRoutes)
-app.use('/api/users', userRoutes)
+// app.use('/api/auth', authRoutes)
+app.use('/api/listing', listingRoutes)
+// app.use('/api/users', userRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong', error: err.message });
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+  res.status(500).json({ message: 'Something went wrong', error: err.message })
+  next()
+  console.error(err.stack)
 })
 
 mongoose

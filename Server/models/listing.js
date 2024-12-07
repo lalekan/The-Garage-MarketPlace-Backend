@@ -1,39 +1,29 @@
 const mongoose = require('mongoose')
-const { Schema } = mongoose;
 
-
-const listingSchema = new Schema({
+const listingSchema = new mongoose.Schema(
+  {
     title: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     description: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     price: {
-        type: Number,
-        required: true
+      type: Number,
+      required: true,
     },
-    images: {
-        type: [String],
-        required: true
+    seller: {
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'User',  
+      required: true,  
     },
-    author: {
-        type: {type: mongoose.Schema.ObjectId, ref: 'User', required: true},
-    },
-    messages: {
-        type: [{type: mongoose.Schema.ObjectId, ref: 'Message'}],
-    },
-    isAvailable: {
-        type: Boolean,
-        default: true
-    },
-    }, 
-    {
-        timestamps: true
-    }
-);
+    images: [{
+      type: String,
+    }],
+  },
+  { timestamps: true }
+)
 
-const Listing = mongoose.model('Listing', listingSchema);
-module.exports = Listing;
+module.exports = mongoose.model('Listing', listingSchema)
