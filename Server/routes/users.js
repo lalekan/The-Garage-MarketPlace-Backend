@@ -1,12 +1,12 @@
 const express = require('express')
-const { authMiddleware } = require('../controllers/auth')
+const {verifyToken} = require('../middleware/auth')
 const User = require('../models/user')
 const Listing = require('../models/listing')
 
 const router = express.Router()
 
 // Get User Profile
-router.get('/profile', authMiddleware, async (req, res) => {
+router.get('/profile', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate('listings')
     if (!user) return res.status(404).json({ message: 'User not found' })
@@ -18,7 +18,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
 })
 
 // Update User Profile
-router.put('/profile', authMiddleware, async (req, res) => {
+router.put('/profile', verifyToken, async (req, res) => {
   const { username, email } = req.body
   try {
     const user = await User.findById(req.user.userId)
@@ -35,7 +35,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
 })
 
 // Get User's Listing History
-router.get('/listings', authMiddleware, async (req, res) => {
+router.get('/listings', verifyToken, async (req, res) => {
   try {
     const listings = await Listing.find({ seller: req.user.userId })
     res.json(listings)
@@ -45,7 +45,7 @@ router.get('/listings', authMiddleware, async (req, res) => {
 })
 
 // Protected route to create a new listing (only authenticated users can create listings)
-router.post('/listing', authMiddleware, async (req, res) => {
+router.post('/listing', verifyToken, async (req, res) => {
     try {
       const newListing = new Listing({
         title: req.body.title,

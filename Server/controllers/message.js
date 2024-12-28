@@ -1,60 +1,132 @@
 const Message = require('../models/message')
+const User = require('../models/user') 
 
-const editMessage = async (req, res) => {
+// Create a new message
+const createMessage = async (req, res) => {
+    const { receiverId, listingId, content } = req.body
+  
     try {
-      const { id } = req.params
-      const { content } = req.body
+      const senderId = req.user._id
   
-      // Find the message
-      const message = await Message.findById(id)
-      if (!message) {
-        return res.status(404).json({ message: 'Message not found' })
+      // Check if the listing exists
+      const listing = await Listing.findById(listingId)
+      if (!listing) {
+        return res.status(404).json({ message: 'Listing not found' })
       }
   
-      // Check if the requester is the sender
-      if (message.senderId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'You can only edit messages you sent' })
+      // Check if the receiver exists
+      const receiver = await User.findById(receiverId)
+      if (!receiver) {
+        return res.status(404).json({ message: 'Receiver not found' })
       }
   
-      // Update the message content
-      message.content = content
-      await message.save()
+      // Create the message
+      const newMessage = new Message({
+        senderId,
+        receiverId,
+        listingId,
+        content,
+      })
   
-      return res.status(200).json({ message: 'Message updated successfully', updatedMessage: message })
+      await newMessage.save()
+  
+      res.status(201).json({
+        message: 'Message sent successfully',
+        newMessage,
+      })
     } catch (error) {
-      console.error('Error editing message:', error)
-      return res.status(500).json({ message: 'Internal server error' })
+      res.status(500).json({ message: 'Server Error', error: error.message })
     }
+  }
+
+// Get all messages
+const getAllMessages = async (req, res) => {
+  try {
+    const messages = await Message.findAll({
+      include: [
+        { model: User, as: 'sender', attributes: ['id', 'username'] },
+        { model: User, as: 'receiver', attributes: ['id', 'username'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    })
+    res.status(200).json({ data: messages })
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching messages.', error: error.message })
+  }
 }
 
+// Get a single message by listing ID
+const getMessageById = async (req, res) => {
+    const { listingId } = req.params
+  
+    try {
+      // Fetch messages related to the given listing
+      const messages = await Message.find({ listingId })
+        .populate('senderId', 'name email') // Populate sender info
+        .populate('receiverId', 'name email') // Populate receiver info
+        .populate('listingId', 'title description') // Populate listing info
+  
+      if (messages.length === 0) {
+        return res.status(404).json({ message: 'No messages found for this listing' })
+      }
+  
+      res.status(200).json({ messages })
+    } catch (error) {
+      res.status(500).json({ message: 'Server Error', error: error.message })
+    }
+  }
+
+// Update a message
+const updateMessage = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { content } = req.body
+
+    const message = await Message.findByPk(id)
+
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found.' })
+    }
+
+    message.content = content || message.content
+
+    await message.save()
+    res.status(200).json({ message: 'Message updated successfully.', data: message })
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating message.', error: error.message })
+  }
+}
+
+// Delete a message (if the user is the sender)
 const deleteMessage = async (req, res) => {
-    try {
-      const { id } = req.params
+    const { messageId } = req.params
   
-      // Find the message
-      const message = await Message.findById(id)
+    try {
+      const message = await Message.findById(messageId)
+      
       if (!message) {
         return res.status(404).json({ message: 'Message not found' })
       }
   
-      // Check if the requester is the sender or the receiver
-      if (message.senderId.toString() !== req.user.id && message.receiverId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'You can only delete messages you sent or received' })
+      // Ensure the logged-in user is the sender
+      if (message.senderId.toString() !== req.user._id) {
+        return res.status(403).json({ message: 'You are not authorized to delete this message' })
       }
   
-      // Implement soft delete by adding user ID to deletedBy array
-      if (!message.deletedBy.includes(req.user.id)) {
-        message.deletedBy.push(req.user.id)
-        await message.save()
-        return res.status(200).json({ message: 'Message deleted successfully' })
-      } else {
-        return res.status(400).json({ message: 'Message already deleted' })
-      }
+      await message.remove()
+  
+      res.status(200).json({ message: 'Message deleted successfully' })
     } catch (error) {
-      console.error('Error deleting message:', error)
-      return res.status(500).json({ message: 'Internal server error' })
+      res.status(500).json({ message: 'Server Error', error: error.message })
     }
-}
-  
+  }
 
-module.exports = {editMessage, deleteMessage}
+
+
+module.exports = {
+  createMessage,
+  getAllMessages,
+  getMessageById,
+  updateMessage,
+  deleteMessage,
+}

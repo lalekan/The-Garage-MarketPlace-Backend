@@ -1,55 +1,56 @@
-const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-require('dotenv').config()
-const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS)
-const APP_SECRET = process.env.JWT_SECRET
+const bcrypt = require('bcryptjs')
 
-// Create a function to hash password and encrypt it
+// Hash password
 const hashPassword = async (password) => {
-  let hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
-  return hashedPassword
+  const salt = await bcrypt.genSalt(10)
+  return bcrypt.hash(password, salt)
 }
 
-//Create a function to compare password to make sure it matches with user input. Returns true if its a match!
-const comparePassword = async (storedPassword, password) => {
-  let passwordMatch = await bcrypt.compare(password, storedPassword)
-  return passwordMatch
+// Compare password
+const comparePassword = async (hashedPassword, plainPassword) => {
+  return bcrypt.compare(plainPassword, hashedPassword)
 }
 
-// Create a function to accept payload used to create the token and encrypt it
+// Create JWT token
 const createToken = (payload) => {
-  let token = jwt.sign(payload, APP_SECRET)
-  return token
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' })
 }
 
-// Create a function to verify if token is legit or not. On true, it passes the decoded payload to the next function
-const verifyToken = (req, res, next) => {
-  const { token } = res.locals
-  let payload = jwt.verify(token, APP_SECRET)
-  if (payload) {
-    res.locals.payload = payload
-    return next()
-  }
-  res.status(401).send({ status: 'Error', msg: 'Unauthorized' })
-}
-
-// Create a function to verify if user has authorization to proceed with certain commands on the page
+// Helper function to strip the token from the Authorization header
 const stripToken = (req, res, next) => {
-  try {
-    const token = req.headers['authorization'].split(' ')[1]
-    if (token) {
-      res.locals.token = token
-      return next()
+    try {
+      const header = req.headers['Authorization']
+      if (!header) throw new Error('Authorization header is missing.')
+  
+      if (!header.startsWith('Bearer ')) throw new Error('Invalid authorization header format.')
+  
+      const token = header.split(' ')[1]
+      req.token = token // Attach token to the request object
+      next()
+    } catch (error) {
+      return res.status(401).json({ message: 'Authorization header is missing or invalid', error: error.message })
     }
-  } catch (error) {
-    res.status(401).send({ status: 'Error', msg: 'Unauthorized' })
   }
-}
+  
+  
 
-module.exports = {
-  stripToken,
-  verifyToken,
-  createToken,
-  comparePassword,
-  hashPassword
-}
+// Verify JWT token middleware
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]
+
+  if (!token) {
+    return res.status(401).json({ message: 'Authorization token is missing' })
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Invalid or expired token' }) // Handles expired token
+    }
+
+    req.user = decoded // Save decoded user data to request for use in other routes
+    next()
+  })
+} 
+
+module.exports = { stripToken, hashPassword, comparePassword, createToken, verifyToken }
