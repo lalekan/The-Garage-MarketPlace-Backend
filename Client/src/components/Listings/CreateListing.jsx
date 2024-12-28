@@ -1,45 +1,42 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom"
+import ListingForm from "./ListingForm"
+import { createListing } from "../../api/listings"
 
 const CreateListing = () => {
-  const { sellerId } = useParams(); // Get sellerId from URL params
   const navigate = useNavigate()
 
-  const handleSubmit = async ({ listingData, images }) => {
+  const handleCreateListing = async (listingData) => {
     try {
       const formData = new FormData();
-      formData.append('title', listingData.title);
-      formData.append('description', listingData.description);
-      formData.append('price', listingData.price);
-      formData.append('seller', sellerId); // Use sellerId from URL instead of decoded token
+      formData.append("title", listingData.title);
+      formData.append("description", listingData.description);
+      formData.append("price", listingData.price);
   
-      images.forEach((file) => formData.append('images', file));
+      if (listingData.images && listingData.images.length > 0) {
+        Array.from(listingData.images).forEach((file) => {
+          formData.append("images", file);
+        });
+      }
   
-      // Make the API call to create the listing
-      const response = await API.post('/listing/create', formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      navigate('/listings')
-  
-      console.log('Listing created:', response.data);
-    } catch (error) {
-      console.error('Error creating listing:', error);
+      const newListing = await createListing(formData);
+      console.log("Listing created successfully:", newListing);
+      navigate("/listings");
+    } catch (err) {
+      console.error("Error creating listing:", err.response?.data || err.message);
+      alert("Failed to create listing. Please try again.");
     }
   };
+  
 
   return (
     <div>
       <h1>Create a New Listing</h1>
       <ListingForm
-        onSubmit={(data) => {
-          console.log('CreateListing ListingForm onSubmit:', data);
-          handleSubmit(data);
-        }}
+        handleSubmit={handleCreateListing} // Pass the handler to the form
+        buttonText="Create Listing"
       />
     </div>
-  );
-};
+  )
+}
 
-export default CreateListing;
+export default CreateListing

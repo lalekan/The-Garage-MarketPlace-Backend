@@ -1,42 +1,39 @@
-import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import API from '../../api/axios'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getSingleListing } from '../../api/listings'
 
-const ListingDetails = () => {
-  const { id } = useParams()
-  const [listing, setListing] = useState(null)
-
+const ListingDetail = ({ listing, user, setListing }) => {
+  const navigate = useNavigate()
+  const [currentListing, setCurrentListing] = useState(listing)
+  
   useEffect(() => {
     const fetchListing = async () => {
-      try {
-        const response = await API.get(`/listing/${id}`)
-        setListing(response.data)
-      } catch (error) {
-        console.error(error)
-      }
+      const listingData = await getSingleListing(listing._id) 
+      setListing(listingData)
+      setCurrentListing(listingData)
     }
-    fetchListing()
-  }, [id])
 
-  if (!listing) return <p>Loading...</p>
+    if (!listing._id) {
+      fetchListing()
+    }
+  }, [listing, setListing])
+
+  const handleEditClick = () => {
+    if (user._id === currentListing.userId) { // Ensure the user is the creator of the listing
+      navigate(`/listings/${currentListing._id}/edit`)
+    }
+  }
 
   return (
     <div>
-      <h1>{listing.title}</h1>
-      <p>{listing.description}</p>
-      <p>${listing.price}</p>
-      <div className="images">
-        {listing.images.map((img, index) => (
-          <img
-            key={index}
-            src={`http://localhost:3000${img}`}
-            alt={`Listing ${listing.title}`}
-            width="200"
-          />
-        ))}
-      </div>
+      <h2>{currentListing.title}</h2>
+      
+      {/* Show "Edit" button only if the logged-in user is the creator */}
+      {user && user._id === currentListing.userId && (
+        <button onClick={handleEditClick}>Edit Listing</button>
+      )}
     </div>
   )
 }
 
-export default ListingDetails
+export default ListingDetail

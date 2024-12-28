@@ -1,11 +1,11 @@
-import axios from '../api/axios'
+import axios from './axios'
 
-const API_BASE_URL = 'http://localhost:5000/api' // Backend base URL
+const API_BASE_URL = 'http://localhost:3000/api'
 
 // Fetch messages for a listing
 export const getListingMessages = async (listingId) => {
   const token = localStorage.getItem('authToken') // Retrieve token from storage
-  const response = await axios.get(`${API_BASE_URL}/listings/${listingId}/messages`, {
+  const response = await axios.get(`${API_BASE_URL}/listing/${listingId}/messages`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   return response.data
@@ -24,7 +24,7 @@ export const getInboxMessages = async () => {
 export const sendMessage = async (listingId, content) => {
   const token = localStorage.getItem('authToken')
   const response = await axios.post(
-    `${API_BASE_URL}/listings/${listingId}/send`,
+    `${API_BASE_URL}/listing/${listingId}/send`,
     { content },
     {
       headers: { Authorization: `Bearer ${token}` },

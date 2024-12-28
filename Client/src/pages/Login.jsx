@@ -1,49 +1,65 @@
-import { useState } from 'react'
-import axios from '../api/axios'
+import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AuthContext } from '../api/AuthContext'
 
-const Login = ({ onLogin }) => {
+const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
+  const { setUser, setAuthenticated } = useContext(AuthContext) // Use AuthContext
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-  
+
     try {
-      const response = await axios.post('/auth/login', { username, password })
-      localStorage.setItem('authToken', response.data.token) // Store the token in localStorage
-      navigate('/')
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to login')
+      }
+
+      const data = await response.json()
+      const { token, user } = data
+
+      // Store the token in localStorage
+      localStorage.setItem('authToken', token)
+
+      // Update the app state using AuthContext
+      setUser(user)
+      setAuthenticated(true)
+      navigate('/') // Redirect to home
     } catch (err) {
-      console.error('Login failed:', err)
+      setError(err.message)
     }
   }
-  
 
   return (
     <div>
-      <h1>Login</h1>
+      <h2>Login</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Username</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        {error && <div>{error}</div>}
+        <label>Username:</label>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <label>Password:</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button type="submit">Login</button>
       </form>
     </div>

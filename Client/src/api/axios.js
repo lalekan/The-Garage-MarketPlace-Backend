@@ -1,20 +1,20 @@
-import Axios from 'axios'
+import axios from 'axios'
 
-//Universal API call for the entire Auth on the app
-let apiUrl = 'http://localhost:3000/api'
+const API = axios.create({
+  baseURL: 'http://localhost:3000/api',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+})
 
-const Client = Axios.create({ baseURL: apiUrl })
+// Optionally add token to every request if needed
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken')
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`
+  }
+  return config
+})
 
-// Intercepts every request axios makes
-Client.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken')
-    if (token) {
-      config.headers['authorization'] = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
-
-export default Client
+export default API

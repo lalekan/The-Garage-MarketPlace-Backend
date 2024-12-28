@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-const MessageForm = ({ receiverId }) => {
+const SendMessage = ({ receiverId }) => {
   const [message, setMessage] = useState("")
 
   const handleChange = (e) => setMessage(e.target.value)
@@ -40,4 +40,4 @@ const MessageForm = ({ receiverId }) => {
   )
 }
 
-export default MessageForm
+export default SendMessage
