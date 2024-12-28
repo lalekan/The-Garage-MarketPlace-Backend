@@ -53,4 +53,27 @@ const verifyToken = (req, res, next) => {
   })
 } 
 
-module.exports = { stripToken, hashPassword, comparePassword, createToken, verifyToken }
+// Create Refresh Token
+const createRefreshToken = (payload) => {
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }) // 7-day validity
+}
+  
+// Verify Refresh Token
+const verifyRefreshToken = (token) => {
+return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) reject(new Error('Invalid refresh token'))
+    resolve(decoded)
+    })
+})
+}
+  
+  module.exports = {
+    stripToken,
+    hashPassword,
+    comparePassword,
+    createToken,
+    verifyToken,
+    createRefreshToken,
+    verifyRefreshToken
+  }

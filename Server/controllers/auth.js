@@ -49,30 +49,27 @@ const registerUser = async (req, res) => {
 
 // Login User
 const loginUser = async (req, res) => {
-  const { username, password } = req.body
+  try {
+    const user = await User.findOne({ email: req.body.email })
 
-  // Find the user in the database
-  const user = await User.findOne({ username })
-  if (!user) {
-    return res.status(401).json({ message: 'Invalid credentials' })
+    if (!user || !(await middleware.comparePassword(user.password, req.body.password))) {
+      return res.status(401).json({ message: 'Invalid credentials' })
+    }
+
+    const payload = { id: user._id, email: user.email }
+    const authToken = middleware.createToken(payload)
+    const refreshToken = middleware.createRefreshToken(payload)
+
+    res.status(200).json({
+      user: { id: user._id, email: user.email, name: user.name },
+      token: authToken,
+      refreshToken,
+    })
+  } catch (error) {
+    res.status(500).json({ message: 'Error during login', error: error.message })
   }
-
-  // Compare the entered password with the hashed password stored in the database
-  const isMatch = await bcrypt.compare(password, user.password)
-  if (!isMatch) {
-    return res.status(401).json({ message: 'Invalid credentials' })
-  }
-
-  // Generate a JWT token with an expiration time (e.g., 1 hour)
-  const token = jwt.sign(
-    { userId: user._id },
-    process.env.JWT_SECRET,  // Secret key
-    { expiresIn: '1h' }      // Token expires in 1 hour
-  )
-
-  // Send the token and user data back to the client
-  res.json({ token, user })
 }
+
 
 // Update User Profile and Password
 const updateUserProfile = async (req, res) => {
@@ -145,6 +142,9 @@ const checkSession = async (req, res) => {
   }
 }
 
+// Refresh token endpoint
+const createRefreshToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' })
+}
 
-
-module.exports = { registerUser, loginUser, updateUserProfile, updatePassword, checkSession }
+module.exports = { registerUser, loginUser, updateUserProfile, updatePassword, checkSession, createRefreshToken }
