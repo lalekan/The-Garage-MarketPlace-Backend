@@ -97,10 +97,11 @@ const App = () => {
 
   // Logout handler
   const handleLogout = () => {
-    // setUser(null) // Reset user state
-    setAuthenticated(false) // Set authenticated to false
-    localStorage.clear()
+    setAuthenticated(false)
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('refreshToken')
   }
+  
 
   // Display a loading screen while checking session
   if (loading) {

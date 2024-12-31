@@ -4,18 +4,25 @@ import Client from './axios'
 export const SignInUser = async (data) => {
     try {
       const res = await Client.post('/auth/login', data)
-      const token = res.data.token
+      const { token, refreshToken, user } = res.data
   
-      if (token) {
-        localStorage.setItem('authToken', token)
-      }
+    //   if (token && refreshToken) {
+        localStorage.setItem('authToken', token) // Save authToken
+        localStorage.setItem('refreshToken', refreshToken) // Save refreshToken
+    //   }
   
-      return res.data.user
+      return user
     } catch (error) {
+        console.error
       throw error
     }
   }
-  
+
+  export const LogoutUser = () => {
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('refreshToken')
+  }
+
 
 // Axios call to create a new user
 export const RegisterUser = async (data) => {
@@ -49,32 +56,34 @@ export const PasswordUpdate = async ({
   }
 }
 
-// Axios call to verify if user is still signed in and authorized to make certain requests.
-// export const CheckSession = async () => {
-//     const token = localStorage.getItem('authToken')
-//     if (!token) {
-//       throw new Error('No token found')
-//     }
-  
-//     try {
-//       const response = await Client.get('/api/auth/check-session', {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       })
-//       return response.data // Assuming response contains the user info
-//     } catch (error) {
-//       throw new Error(error.response?.data?.message || 'Session expired')
-//     }
-//   }
-
 export const CheckSession = async (token) => {
     try {
-      const response = await axios.get('/api/auth/check-session', {
+      const response = await Client.get('/auth/check-session', {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      return response.data // Return user data from the backend
+      });
+      return response.data; // Return user data
     } catch (err) {
-      throw new Error('Session expired')
+      console.error('Error in CheckSession:', err.response?.data || err.message);
+      throw err;
+    }
+  };
+  
+  
+  
+
+  export const RefreshToken = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+      if (!refreshToken) throw new Error('Refresh token not found')
+  
+      const res = await Client.post('/auth/refresh-token', { refreshToken })
+      const { token } = res.data
+  
+      localStorage.setItem('authToken', token) // Update authToken
+      return token
+    } catch (error) {
+      throw error
     }
   }
+  
+  
