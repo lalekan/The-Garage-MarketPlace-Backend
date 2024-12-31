@@ -17,31 +17,30 @@ const validateFields = (fields, res) => {
 // Register User
 const registerUser = async (req, res) => {
   try {
-    const { username, password, confirmPassword, email, image, bio } = req.body
+    const { username, email, password } = req.body
 
-    // Validate required fields
-    if (!validateFields({ username, password, confirmPassword, email }, res)) return
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' })
-    }
-
-    // Ensure User model is defined and imported correctly
-    const existingUser = await User.findOne({ email })
+    // Check if username or email already exists
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] })
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already exists' })
+      return res.status(400).json({ message: 'Username or email already exists' })
     }
 
-    // Hash password
+    // Hash the password
     const hashedPassword = await middleware.hashPassword(password)
 
-    // Create new user
-    const newUser = new User({ username, password: hashedPassword, email, image, bio })
-    await newUser.save()
-    res.status(201).json({ message: 'User registered successfully', user: newUser })
+    // Create a new user
+    const newUser = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+    })
+
+    res.status(201).json({
+      user: { id: newUser._id, username: newUser.username, email: newUser.email },
+    })
   } catch (error) {
-    console.error("Error in registerUser:", error)
-    res.status(500).json({ message: 'Server error', error: error.message })
+    console.error('Registration error:', error)
+    res.status(500).json({ message: 'Error during registration', error: error.message })
   }
 }
 
@@ -50,26 +49,21 @@ const registerUser = async (req, res) => {
 // Login User
 const loginUser = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email })
-
-    if (!user || !(await middleware.comparePassword(user.password, req.body.password))) {
+    const { username, password } = req.body
+    const user = await User.findOne({ username })
+    if (!user || !(await middleware.comparePassword(user.password, password))) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
-    const payload = { id: user._id, email: user.email }
+    const payload = { id: user._id, username: user.username }
     const authToken = middleware.createToken(payload)
     const refreshToken = middleware.createRefreshToken(payload)
 
-    res.status(200).json({
-      user: { id: user._id, email: user.email, name: user.name },
-      token: authToken,
-      refreshToken,
-    })
+    res.status(200).json({ user, token: authToken, refreshToken })
   } catch (error) {
-    res.status(500).json({ message: 'Error during login', error: error.message })
+    res.status(500).json({ message: error.message })
   }
 }
-
 
 // Update User Profile and Password
 const updateUserProfile = async (req, res) => {
@@ -97,7 +91,6 @@ const updateUserProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message })
   }
 }
-
 
 // Update User Password
 const updatePassword = async (req, res) => {
@@ -129,18 +122,24 @@ const updatePassword = async (req, res) => {
 // Check session
 const checkSession = async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1] // Get the token from the Authorization header
+  console.log('Token received in checkSession:', token) // Debug log
   if (!token) return res.status(401).json({ message: 'No token provided' })
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const user = await User.findById(decoded.userId)
+    const user = await User.findById(decoded.id)
     if (!user) return res.status(401).json({ message: 'User not found' })
-    
+
     res.json({ user }) // Return the user if valid
   } catch (err) {
-    res.status(401).json({ message: 'Session expired' })
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Session expired' })
+    }
+    res.status(401).json({ message: 'Invalid token' })
   }
 }
+
+
 
 // Refresh token endpoint
 const createRefreshToken = (payload) => {

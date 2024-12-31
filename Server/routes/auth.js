@@ -12,21 +12,22 @@ router.post('/register', controller.registerUser)
 
 // Refresh Token
 router.post('/refresh-token', async (req, res) => {
+    const { refreshToken } = req.body
+    if (!refreshToken) return res.status(400).json({ message: 'No refresh token provided' })
+  
     try {
-        const { refreshToken } = req.body
-
-        if (!refreshToken) {
-        return res.status(403).json({ message: 'Refresh token is required' })
-        }
-
-        const decoded = await middleware.verifyRefreshToken(refreshToken)
-        const newAuthToken = middleware.createToken({ id: decoded.id, email: decoded.email })
-
-        res.status(200).json({ token: newAuthToken })
-    } catch (error) {
-        res.status(403).json({ message: error.message })
+      const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET)
+      const newAuthToken = jwt.sign({ id: decoded.id, username: decoded.username }, process.env.JWT_SECRET, {
+        expiresIn: '1h',
+      })
+      res.status(200).json({ token: newAuthToken })
+    } catch (err) {
+      res.status(401).json({ message: 'Invalid refresh token' })
     }
   })
+  
+  
+  
   
 
 // Update User Profile

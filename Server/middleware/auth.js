@@ -20,18 +20,21 @@ const createToken = (payload) => {
 // Helper function to strip the token from the Authorization header
 const stripToken = (req, res, next) => {
     try {
-      const header = req.headers['Authorization']
+      const header = req.headers['authorization'] // Get Authorization header
+      console.log('Authorization Header Received:', header) // Debug log
+  
       if (!header) throw new Error('Authorization header is missing.')
   
       if (!header.startsWith('Bearer ')) throw new Error('Invalid authorization header format.')
   
-      const token = header.split(' ')[1]
+      const token = header.split(' ')[1] // Extract the token
       req.token = token // Attach token to the request object
       next()
     } catch (error) {
       return res.status(401).json({ message: 'Authorization header is missing or invalid', error: error.message })
     }
   }
+  
   
   
 

@@ -20,7 +20,8 @@ const logger = winston.createLogger({
 app.use(cors({
   origin: 'http://localhost:5173', // Allow requests from frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these methods
-  allowedHeaders: ['Content-Type', 'Authorization'] // Allow headers if necessary
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow headers if necessary
+  credentials: true, //Allow cookies
 }))
 
 // Middleware
