@@ -17,59 +17,42 @@ const createToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' })
 }
 
-// Helper function to strip the token from the Authorization header
-const stripToken = (req, res, next) => {
-    try {
-      const header = req.headers['authorization'] // Get Authorization header
-      console.log('Authorization Header Received:', header) // Debug log
-  
-      if (!header) throw new Error('Authorization header is missing.')
-  
-      if (!header.startsWith('Bearer ')) throw new Error('Invalid authorization header format.')
-  
-      const token = header.split(' ')[1] // Extract the token
-      req.token = token // Attach token to the request object
-      next()
-    } catch (error) {
-      return res.status(401).json({ message: 'Authorization header is missing or invalid', error: error.message })
-    }
-  }
-  
-  
-  
-
-// Verify JWT token middleware
-const verifyToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1]
-
-  if (!token) {
-    return res.status(401).json({ message: 'Authorization token is missing' })
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: 'Invalid or expired token' }) // Handles expired token
-    }
-
-    req.user = decoded // Save decoded user data to request for use in other routes
-    next()
-  })
-} 
-
 // Create Refresh Token
 const createRefreshToken = (payload) => {
     return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }) // 7-day validity
 }
-  
-// Verify Refresh Token
-const verifyRefreshToken = (token) => {
-return new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) reject(new Error('Invalid refresh token'))
-    resolve(decoded)
-    })
-})
+
+// Helper function to strip the token from the Authorization header
+const stripToken = (req, res, next) => {
+  try {
+    const header = req.headers.authorization
+    if (!header) throw new Error('Authorization header missing')
+
+    if (!header.startsWith('Bearer ')) throw new Error('Invalid authorization header format')
+
+    const token = header.split(' ')[1]
+    req.token = token
+    next()
+  } catch (error) {
+    return res.status(401).json({ message: 'Authorization header missing or invalid', error: error.message })
+  }
 }
+
+// Verify Token Middleware
+const verifyToken = (req, res, next) => {
+  console.log('Token from request:', req.token) // Debug log
+  jwt.verify(req.token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      console.error('JWT Verification Error:', err) // Debug log
+      return res.status(401).json({ message: 'Invalid or expired token' })
+    }
+    req.user = decoded
+    next()
+  })
+}
+
+
+
   
   module.exports = {
     stripToken,
@@ -77,6 +60,5 @@ return new Promise((resolve, reject) => {
     comparePassword,
     createToken,
     verifyToken,
-    createRefreshToken,
-    verifyRefreshToken
+    createRefreshToken
   }

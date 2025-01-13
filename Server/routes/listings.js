@@ -1,29 +1,26 @@
 const express = require('express')
-const upload = require('../middleware/multer')
-const {
-  createListing,
-  getAllListings,
-  getListingById,
-  updateListing,
-  deleteListing,
-} = require('../controllers/listing')
-const {verifyToken} = require('../middleware/auth')
-
 const router = express.Router()
+const multer = require('multer')
+const controller = require('../controllers/listing')
+const middleware = require('../middleware/auth')
+const Listing = require('../models/listing')
 
-// Create a new listing with image upload
-router.post('/', verifyToken, upload.array('images', 5), createListing)
+// Set up Multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/')
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`)
+  },
+})
+const upload = multer({ storage })
 
-// Get all listings
-router.get('/', getAllListings)
-
-// Get a specific listing by ID
-router.get('/:id', getListingById)
-
-// Update a listing by ID
-router.put('/:id', verifyToken, upload.array('images', 5), updateListing)
-
-// Delete a listing by ID
-router.delete('/:id', verifyToken, deleteListing)
+// CRUD routes
+router.post('/', middleware.verifyToken, upload.array('images', 5), controller.createListing)
+router.get('/', controller.getAllListings)
+router.get('/:id', controller.getListingById)
+router.put('/:id', middleware.verifyToken, upload.array('images', 5), controller.updateListing)
+router.delete('/:id', middleware.verifyToken, controller.deleteListing)
 
 module.exports = router

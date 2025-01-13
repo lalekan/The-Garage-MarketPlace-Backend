@@ -8,7 +8,7 @@ const router = express.Router()
 
 // Route groups
 router.use('/auth', authRoutes)
-router.use('/listing', listingRoutes)
+router.use('/listings', listingRoutes)
 router.use('/messages', messageRoutes)
 router.use('/users', userRoutes)
 

@@ -3,40 +3,40 @@ const jwt = require('jsonwebtoken')
 const  User = require('../models/user')
 const middleware = require('../middleware/auth')
 
-// Helper function for validation
-const validateFields = (fields, res) => {
-  for (const [key, value] of Object.entries(fields)) {
-    if (!value) {
-      res.status(400).json({ message: `${key} is required` })
-      return false
-    }
-  }
-  return true
-}
-
 // Register User
 const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body
 
-    // Check if username or email already exists
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] })
-    if (existingUser) {
-      return res.status(400).json({ message: 'Username or email already exists' })
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'Please provide username, email, and password.' })
     }
 
-    // Hash the password
+    const existingUser = await User.findOne({ 
+      $or: [{ username }, { email }] 
+    })
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username or email already exists.' })
+    }
+
+    // Hash password
     const hashedPassword = await middleware.hashPassword(password)
 
-    // Create a new user
+    // Create new user
     const newUser = await User.create({
       username,
       email,
       password: hashedPassword,
     })
 
+    // Return success
     res.status(201).json({
-      user: { id: newUser._id, username: newUser.username, email: newUser.email },
+      message: 'User registered successfully',
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+      },
     })
   } catch (error) {
     console.error('Registration error:', error)
@@ -44,26 +44,52 @@ const registerUser = async (req, res) => {
   }
 }
 
-
-
 // Login User
 const loginUser = async (req, res) => {
   try {
     const { username, password } = req.body
+
+    // Check if username and password are provided
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Please provide username and password.' })
+    }
+
+    // Check if user exists
     const user = await User.findOne({ username })
-    if (!user || !(await middleware.comparePassword(user.password, password))) {
+    if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
+    // Compare password
+    const isMatch = await middleware.comparePassword(user.password, password)
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' })
+    }
+
+    // Create JWT payload
     const payload = { id: user._id, username: user.username }
-    const authToken = middleware.createToken(payload)
+
+    // Create Access Token + Refresh Token
+    const authToken = middleware.createToken(payload)         
     const refreshToken = middleware.createRefreshToken(payload)
 
-    res.status(200).json({ user, token: authToken, refreshToken })
+    // Return user + tokens
+    res.status(200).json({
+      message: 'Logged in successfully',
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+      token: authToken,
+      refreshToken,
+    })
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Login error:', error)
+    res.status(500).json({ message: 'Server Error', error: error.message })
   }
 }
+
 
 // Update User Profile and Password
 const updateUserProfile = async (req, res) => {
@@ -121,23 +147,18 @@ const updatePassword = async (req, res) => {
 
 // Check session
 const checkSession = async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1] // Get the token from the Authorization header
-  console.log('Token received in checkSession:', token) // Debug log
-  if (!token) return res.status(401).json({ message: 'No token provided' })
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const user = await User.findById(decoded.id)
-    if (!user) return res.status(401).json({ message: 'User not found' })
-
-    res.json({ user }) // Return the user if valid
-  } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Session expired' })
+    console.log('Decoded user in req:', req.user) 
+    const user = await User.findById(req.user.id).select('username email')
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
     }
-    res.status(401).json({ message: 'Invalid token' })
+    res.status(200).json({ user })
+  } catch (err) {
+    res.status(500).json({ message: 'Error checking session', error: err.message })
   }
 }
+
 
 
 
