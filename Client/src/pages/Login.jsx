@@ -1,3 +1,4 @@
+// src/pages/Login.jsx (already looks good, small refinements):
 import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../api/AuthContext'
@@ -6,6 +7,7 @@ const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
+
   const { setUser, setAuthenticated } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -15,9 +17,7 @@ const Login = () => {
     try {
       const response = await fetch('http://localhost:3000/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       })
 
@@ -27,15 +27,17 @@ const Login = () => {
       }
 
       const data = await response.json()
-      const { token, user } = data
+      const { token, refreshToken, user } = data
 
-      // Store the token in localStorage
+      // Save tokens in localStorage
       localStorage.setItem('authToken', token)
+      localStorage.setItem('refreshToken', refreshToken)
 
-      // Update the app state using AuthContext
+      // Update context state
       setUser(user)
       setAuthenticated(true)
-      navigate('/') // Redirect to home
+
+      navigate('/')
     } catch (err) {
       setError(err.message)
     }

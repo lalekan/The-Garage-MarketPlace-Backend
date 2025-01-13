@@ -17,9 +17,9 @@ export const createListing = async (formData) => {
 // Fetch all listings
 export const getListings = async () => {
   try {
-    console.log('Fetching listings...')
+    // console.log('Fetching listings...')
     const response = await API.get('/listing') 
-    console.log('Listings fetched:', response.data)
+    // console.log('Listings fetched:', response.data)
     if (!response.ok) {
         throw new Error('Failed to fetch listings')
     }

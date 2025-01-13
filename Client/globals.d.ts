@@ -1,1 +1,1 @@
-declare module 'jwt-decode';
+declare module 'jwt-decode'

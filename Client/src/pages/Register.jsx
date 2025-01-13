@@ -48,7 +48,7 @@ const Register = () => {
       setIsLoading(true)
       // Call the API to register the user
       const response = await RegisterUser({ username, email, password, confirmPassword })
-      console.log('Registration successful:', response)
+      // console.log('Registration successful:', response)
   
       // Redirect to login or home page
       navigate('/login')

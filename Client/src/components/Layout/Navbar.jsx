@@ -1,38 +1,38 @@
-import { Link } from "react-router-dom"
+import React, { useContext } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AuthContext } from '../../api/AuthContext'
 import '../../styles/Navbar.css'
 
-const Navbar = ({ isAuthenticated, user, onLogout, onLogin }) => {
+const Navbar = () => {
+  const { user, authenticated, setAuthenticated, setUser } = useContext(AuthContext)
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    setUser(null)
+    setAuthenticated(false)
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('refreshToken')
+    navigate('/login')
+  }
+
   return (
     <nav className="navbar">
       <div className="navbar-logo">
         <Link to="/">The Garage Marketplace</Link>
       </div>
-      <ul className="navbar-links">
-        <li>
-          <Link to="/">Home</Link>
-        </li>
-        {isAuthenticated ? (
-          <>
-            <li>
-              <Link to="/listings">Listings</Link>
-            </li>
-            <li>
-              <button onClick={onLogout} className="logout-button">Logout</button>
-            </li>
-          </>
+      <div className="navbar-links">
+        <Link to="/">Home</Link>
+        {authenticated && <Link to="/messages">Messages</Link>}
+        {authenticated ? (
+          <button className="logout-button" onClick={handleLogout}>
+            Logout
+          </button>
         ) : (
-          <>
-            <li>
-              <Link to="/login">Login</Link>
-            </li>
-            <li>
-              <Link to="/register">Register</Link>
-            </li>
-          </>
+          <Link to="/login">Login</Link>
         )}
-      </ul>
+      </div>
     </nav>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar
