@@ -9,7 +9,6 @@ h1, h2, h3, h4 {
   font-family: "Helvetica Neue", sans-serif;
 }
 
-/* Card style for listings/messages */
 .card {
   background-color: white;
   border-radius: 6px;
@@ -19,7 +18,6 @@ h1, h2, h3, h4 {
   padding: 1rem;
 }
 
-/* Buttons */
 button {
   background-color: #4267B2;
   color: white;

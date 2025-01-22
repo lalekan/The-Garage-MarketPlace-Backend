@@ -1,4 +1,3 @@
-// src/pages/Login.jsx (already looks good, small refinements):
 import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../api/AuthContext'
@@ -29,11 +28,9 @@ const Login = () => {
       const data = await response.json()
       const { token, refreshToken, user } = data
 
-      // Save tokens in localStorage
       localStorage.setItem('authToken', token)
       localStorage.setItem('refreshToken', refreshToken)
 
-      // Update context state
       setUser(user)
       setAuthenticated(true)
 

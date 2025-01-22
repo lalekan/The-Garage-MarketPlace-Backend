@@ -13,15 +13,17 @@ const Inbox = () => {
     const fetchMessages = async () => {
       if (authenticated && user) {
         try {
-          const response = await axios.get(`/messages/${user.id}`) // Fetch messages for the logged-in user
+          const response = await axios.get(`/messages/${user._id}`)
           setMessages(response.data.messages)
+
+          ('Fetched Messages:', messages)
         } catch (err) {
           setError('Failed to fetch messages.')
         } finally {
           setLoading(false)
         }
       }
-    }
+    }    
 
     fetchMessages()
   }, [authenticated, user])

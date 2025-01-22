@@ -4,7 +4,7 @@ import axios from '../../api/axios'
 import '../../styles/EditListing.css'
 
 const EditListing = () => {
-  const { id } = useParams() // Get the listing ID from the URL
+  const { id } = useParams()
   const navigate = useNavigate()
 
   const [formData, setFormData] = useState({
@@ -12,17 +12,17 @@ const EditListing = () => {
     description: '',
     price: '',
   })
-  const [images, setImages] = useState([]) // To store selected images
-  const [existingImages, setExistingImages] = useState([]) // To display current images
+  const [images, setImages] = useState([])
+  const [existingImages, setExistingImages] = useState([])
   const [error, setError] = useState('')
 
   useEffect(() => {
     const fetchListing = async () => {
       try {
-        const response = await axios.get(`/listings/${id}`) // Fetch listing details
+        const response = await axios.get(`/listings/${id}`)
         const { title, description, price, images } = response.data
         setFormData({ title, description, price })
-        setExistingImages(images) // Load existing images
+        setExistingImages(images)
       } catch (err) {
         console.error('Error fetching listing:', err.message)
         setError('Unable to load listing details.')
@@ -37,30 +37,36 @@ const EditListing = () => {
   }
 
   const handleFileChange = (e) => {
-    setImages(e.target.files) // Set the selected files
+    setImages(e.target.files)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
+  
     const formDataToSend = new FormData()
     formDataToSend.append('title', formData.title)
     formDataToSend.append('description', formData.description)
     formDataToSend.append('price', formData.price)
     for (const file of images) {
-      formDataToSend.append('images', file) // Add each image to FormData
+      formDataToSend.append('images', file)
     }
-
+  
+    const token = localStorage.getItem('authToken')   
     try {
-      await axios.put(`/listings/${id}`, formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await axios.put(`/listings/${id}`, formDataToSend, {
+        headers: {
+          Authorization: `Bearer ${token}`, 
+          'Content-Type': 'multipart/form-data',
+        },
       })
-      navigate('/') // Redirect to the home page
+      navigate('/')
     } catch (err) {
-      console.error('Error updating listing:', err.message)
+      console.error('Error updating listing:', err.response?.data || err.message)
       setError('Unable to update listing. Please try again.')
     }
   }
+  
+  
 
   return (
     <div className="edit-listing-page">
@@ -104,19 +110,13 @@ const EditListing = () => {
                 key={index}
                 src={`http://localhost:3000/${image}`}
                 alt="Listing"
-                className="existing-image"
               />
             ))}
           </div>
         </label>
         <label>
           Upload New Images:
-          <input
-            type="file"
-            name="images"
-            multiple
-            onChange={handleFileChange}
-          />
+          <input type="file" name="images" multiple onChange={handleFileChange} />
         </label>
         <button type="submit">Update Listing</button>
       </form>

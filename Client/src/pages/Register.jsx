@@ -1,5 +1,3 @@
-// src/pages/Register.jsx
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RegisterUser } from '../api/Auth'
@@ -17,7 +15,6 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prevData) => ({
@@ -26,14 +23,12 @@ const Register = () => {
     }))
   }
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     
     const { username, email, password, confirmPassword } = formData
   
-    // Validate form inputs
     if (!username || !email || !password || !confirmPassword) {
       setError('All fields are required.')
       return
@@ -46,11 +41,8 @@ const Register = () => {
   
     try {
       setIsLoading(true)
-      // Call the API to register the user
       const response = await RegisterUser({ username, email, password, confirmPassword })
-      // console.log('Registration successful:', response)
   
-      // Redirect to login or home page
       navigate('/login')
     } catch (err) {
       console.error('Error during registration:', err)
@@ -65,7 +57,6 @@ const Register = () => {
     <div className="register-container">
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
-        {/* Name Field */}
         <div className="form-group">
           <label htmlFor="name">Username</label>
           <input
@@ -78,7 +69,6 @@ const Register = () => {
           />
         </div>
 
-        {/* Email Field */}
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
@@ -91,7 +81,6 @@ const Register = () => {
           />
         </div>
 
-        {/* Password Field */}
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
@@ -104,7 +93,6 @@ const Register = () => {
           />
         </div>
 
-        {/* Confirm Password Field */}
         <div className="form-group">
           <label htmlFor="confirmPassword">Confirm Password</label>
           <input
@@ -117,10 +105,8 @@ const Register = () => {
           />
         </div>
 
-        {/* Error Message */}
         {error && <p className="error-message">{error}</p>}
 
-        {/* Submit Button */}
         <button type="submit" disabled={isLoading}>
           {isLoading ? 'Registering...' : 'Register'}
         </button>

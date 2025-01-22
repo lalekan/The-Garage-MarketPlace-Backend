@@ -1,4 +1,3 @@
-// Home.jsx or wherever you want to add the button
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -7,7 +6,7 @@ const Home = ({ isAuthenticated }) => {
 
   const handleCreateListing = () => {
     if (isAuthenticated) {
-      navigate('/create-listing')  // Redirect to the listing creation page
+      navigate('/create-listing') 
     } else {
       alert('You must be signed in to create a listing.')
     }

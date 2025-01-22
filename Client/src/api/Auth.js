@@ -2,26 +2,20 @@ import Client from './axios'
 
 // Axios call to check token, verify and sign in user
 export const SignInUser = async (data) => {
-    try {
-      const res = await Client.post('/auth/login', data)
-      const { token, refreshToken, user } = res.data
-  
-    //   if (token && refreshToken) {
-        localStorage.setItem('authToken', token)
-        localStorage.setItem('refreshToken', refreshToken) 
-  
-      return user
-    } catch (error) {
-        console.error
-      throw error
-    }
-  }
+  try {
+    const res = await Client.post('/auth/login', data)
+    const { token, refreshToken, user } = res.data
 
-  export const LogoutUser = () => {
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('refreshToken')
-  }
+    localStorage.setItem('authToken', token)
+    localStorage.setItem('refreshToken', refreshToken)
+    localStorage.setItem('user', JSON.stringify(user))
 
+    return user
+  } catch (error) {
+    console.error('Sign-in error:', error)
+    throw error
+  }
+}
 
 // Axios call to create a new user
 export const RegisterUser = async (data) => {
@@ -56,36 +50,32 @@ export const PasswordUpdate = async ({
 } 
   
 export const CheckSession = async (token) => {
-  console.log('Token used for CheckSession:', token)
-
   try {
     const response = await Client.get('/auth/check-session', {
       headers: { Authorization: `Bearer ${token}` },
     })
-    console.log('CheckSession Response:', response.data)
     return response.data.user
   } catch (err) {
-    console.error('Error in CheckSession:', err.response?.data || err.message)
+    console.error('Error in CheckSession:', err.message)
     throw err
   }
 }
 
 
+export const RefreshToken = async () => {
+  const refreshToken = localStorage.getItem('refreshToken')
+  if (!refreshToken) throw new Error('No refresh token found')
 
-  
+  try {
+    const response = await Client.post('/auth/refresh-token', { refreshToken })
+    const { token, user } = response.data
 
-  export const RefreshToken = async () => {
-    const refreshToken = localStorage.getItem('refreshToken')
-    if (!refreshToken) throw new Error('No refresh token found')
-  
-    try {
-      const response = await Client.post('/auth/refresh-token', { refreshToken })
-      const { token } = response.data
-  
-      localStorage.setItem('authToken', token) // Store new authToken
-      return token
-    } catch (err) {
-      console.error('Error refreshing token:', err.response?.data || err.message)
-      throw err
-    }
+    localStorage.setItem('authToken', token)
+    localStorage.setItem('user', JSON.stringify(user)) 
+
+    return token
+  } catch (err) {
+    console.error('Error refreshing token:', err.message)
+    throw err
   }
+}

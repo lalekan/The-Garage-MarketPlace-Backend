@@ -13,18 +13,15 @@ const CreateListing = () => {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
-  // Handle text input changes
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Handle image file input
   const handleImageChange = (e) => {
     setFormData((prev) => ({ ...prev, images: e.target.files }))
   }
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -32,14 +29,12 @@ const CreateListing = () => {
 
     const { title, description, price, images } = formData
 
-    // Validation
     if (!title || !description || !price) {
       setError('All fields except images are required.')
       setIsLoading(false)
       return
     }
 
-    // Prepare form data for upload
     const form = new FormData()
     form.append('title', title)
     form.append('description', description)
@@ -50,7 +45,7 @@ const CreateListing = () => {
       await axios.post('/listings', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-      navigate('/') // Redirect to home page after success
+      navigate('/') 
     } catch (err) {
       console.error('Error creating listing:', err.message)
       setError('Failed to create listing. Please try again.')

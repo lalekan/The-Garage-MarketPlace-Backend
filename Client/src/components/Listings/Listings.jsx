@@ -1,27 +1,48 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from '../../api/axios'
+import { AuthContext } from '../../api/AuthContext'
+import Modal from '../Messages/Modal'
 import '../../styles/Listings.css'
 
-const Listings = ({ user, authenticated }) => {
+const Listings = () => {
   const [listings, setListings] = useState([])
   const [error, setError] = useState('')
+  const [loadingListings, setLoadingListings] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [sellerEmail, setSellerEmail] = useState('')
+  const { user, authenticated, loading: loadingUser } = useContext(AuthContext)
   const navigate = useNavigate()
 
   useEffect(() => {
     const fetchListings = async () => {
       try {
         const response = await axios.get('/listings')
-        console.log('Fetched listings:', response.data) // Debug log
         setListings(response.data)
       } catch (err) {
         console.error('Error fetching listings:', err.message)
         setError('Failed to fetch listings. Please try again later.')
+      } finally {
+        setLoadingListings(false)
       }
     }
 
     fetchListings()
   }, [])
+
+  const handleMessageSeller = (email) => {
+    setSellerEmail(email)
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSellerEmail('')
+  }
+
+  if (loadingUser || loadingListings) {
+    return <div>Loading...</div>
+  }
 
   if (error) {
     return <p className="error-message">{error}</p>
@@ -35,25 +56,14 @@ const Listings = ({ user, authenticated }) => {
             className="create-listing-button"
             onClick={() => navigate('/create-listing')}
           >
-            Create New Listing
+            <i className="fas fa-plus"></i> Create New Listing
           </button>
         </div>
       )}
 
       <div className="listing-wall">
         {listings.map((listing) => {
-          const isOwner =
-            authenticated &&
-            user &&
-            listing.userId &&
-            listing.userId._id &&
-            listing.userId._id === user.id
-
-          console.log(
-            `Listing: ${listing.title}, isOwner: ${isOwner}, Listing UserId: ${
-              listing.userId?._id
-            }, Logged-in UserId: ${user?.id}`
-          )
+          const isOwner = authenticated && user?._id === listing?.userId?._id
 
           return (
             <div key={listing._id} className="listing-card">
@@ -77,13 +87,13 @@ const Listings = ({ user, authenticated }) => {
               )}
 
               <div className="action-buttons">
-                {isOwner && (
+                {isOwner ? (
                   <>
                     <button
                       className="edit-button"
                       onClick={() => navigate(`/listings/${listing._id}/edit`)}
                     >
-                      Edit
+                      <i className="fas fa-edit"></i> Edit
                     </button>
                     <button
                       className="delete-button"
@@ -98,24 +108,15 @@ const Listings = ({ user, authenticated }) => {
                         }
                       }}
                     >
-                      Delete
+                      <i className="fas fa-trash"></i> Delete
                     </button>
                   </>
-                )}
-
-                {!isOwner && authenticated && (
+                ) : (
                   <button
                     className="message-button"
-                    onClick={() =>
-                      navigate('/send-message', {
-                        state: {
-                          receiverId: listing.userId?._id,
-                          listingId: listing._id,
-                        },
-                      })
-                    }
+                    onClick={() => handleMessageSeller(listing.userId.email)}
                   >
-                    Message Seller
+                    <i className="fas fa-envelope"></i> Message Seller
                   </button>
                 )}
               </div>
@@ -123,6 +124,14 @@ const Listings = ({ user, authenticated }) => {
           )
         })}
       </div>
+
+      <Modal isOpen={isModalOpen} onClose={closeModal}>
+        <h3>Seller's Email</h3>
+        <p>{sellerEmail}</p>
+        <button className="close-button" onClick={closeModal}>
+          Close
+        </button>
+      </Modal>
     </div>
   )
 }

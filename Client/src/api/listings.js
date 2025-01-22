@@ -1,13 +1,13 @@
 import API from './axios'
 
 export const createListing = async (formData) => {
-  const token = localStorage.getItem('authToken') // Retrieve token from localStorage
+  const token = localStorage.getItem('authToken') 
   if (!token) throw new Error('No token found')
 
   const response = await API.post('/listing', formData, {
     headers: {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data', // For file uploads
+      'Content-Type': 'multipart/form-data',
     },
   })
   return response.data
@@ -17,9 +17,7 @@ export const createListing = async (formData) => {
 // Fetch all listings
 export const getListings = async () => {
   try {
-    // console.log('Fetching listings...')
     const response = await API.get('/listing') 
-    // console.log('Listings fetched:', response.data)
     if (!response.ok) {
         throw new Error('Failed to fetch listings')
     }
