@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const  User = require('../models/user')
+const  User = require('../models/User')
 const middleware = require('../middleware/auth')
 
 // Register User
@@ -29,7 +29,6 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
     })
 
-    // Return success
     res.status(201).json({
       message: 'User registered successfully',
       user: {
@@ -49,18 +48,15 @@ const loginUser = async (req, res) => {
   try {
     const { username, password } = req.body
 
-    // Check if username and password are provided
     if (!username || !password) {
       return res.status(400).json({ message: 'Please provide username and password.' })
     }
 
-    // Check if user exists
     const user = await User.findOne({ username })
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
-    // Compare password
     const isMatch = await middleware.comparePassword(user.password, password)
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' })
@@ -148,7 +144,6 @@ const updatePassword = async (req, res) => {
 // Check session
 const checkSession = async (req, res) => {
   try {
-    console.log('Decoded user in req:', req.user) 
     const user = await User.findById(req.user.id).select('username email')
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
@@ -158,8 +153,6 @@ const checkSession = async (req, res) => {
     res.status(500).json({ message: 'Error checking session', error: err.message })
   }
 }
-
-
 
 
 // Refresh token endpoint

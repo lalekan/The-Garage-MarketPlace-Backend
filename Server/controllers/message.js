@@ -1,29 +1,27 @@
-// controllers/message.js
-
-const Message = require('../models/message')
-const User = require('../models/user')
-const Listing = require('../models/listing')
+const Message = require('../models/Message')
+const User = require('../models/User')
+const Listing = require('../models/Listing')
 
 
 const createMessage = async (req, res) => {
-  const { receiverId, listingId, content } = req.body
-
   try {
-    const senderId = req.user._id
+    const { receiverId, listingId, content } = req.body
+    const senderId = req.user?._id
 
-    // Check if listing exists
+    if (!senderId) {
+      return res.status(400).json({ message: 'Sender ID is required.' })
+    }
+
     const listing = await Listing.findById(listingId)
     if (!listing) {
       return res.status(404).json({ message: 'Listing not found' })
     }
 
-    // Check if receiver exists
     const receiver = await User.findById(receiverId)
     if (!receiver) {
       return res.status(404).json({ message: 'Receiver not found' })
     }
 
-    // Create the message
     const newMessage = new Message({
       senderId,
       receiverId,
@@ -37,17 +35,15 @@ const createMessage = async (req, res) => {
       newMessage,
     })
   } catch (error) {
+    console.error('Error in createMessage:', error.message)
     res.status(500).json({ message: 'Server Error', error: error.message })
   }
 }
 
-/**
- * Get all messages (optional or admin use)
- * @route GET /api/messages
- */
 const getAllMessages = async (req, res) => {
   try {
-    const messages = await Message.find()
+    const { userId } = req.params
+    const messages = await Message.find({receiverId: userId})
       .populate('senderId', 'username email')
       .populate('receiverId', 'username email')
       .populate('listingId', 'title description')
@@ -59,15 +55,11 @@ const getAllMessages = async (req, res) => {
   }
 }
 
-/**
- * Get all messages for a particular listing
- * @route GET /api/messages/listing/:listingId
- */
+
 const getMessagesByListingId = async (req, res) => {
   const { listingId } = req.params
 
   try {
-    // Fetch messages for the given listing
     const messages = await Message.find({ listingId })
       .populate('senderId', 'username email')
       .populate('receiverId', 'username email')
@@ -84,27 +76,21 @@ const getMessagesByListingId = async (req, res) => {
   }
 }
 
-/**
- * Update a message by _id
- * @route PUT /api/messages/:messageId
- */
+
 const updateMessage = async (req, res) => {
   try {
     const { messageId } = req.params
     const { content } = req.body
 
-    // In Mongoose:
     const message = await Message.findById(messageId)
     if (!message) {
       return res.status(404).json({ message: 'Message not found.' })
     }
 
-    // Optionally check if the current user is the sender
     if (message.senderId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Unauthorized.' })
     }
 
-    // Update the content
     message.content = content || message.content
     await message.save()
 
@@ -114,10 +100,6 @@ const updateMessage = async (req, res) => {
   }
 }
 
-/**
- * Delete a message by _id (sender only)
- * @route DELETE /api/messages/:messageId
- */
 const deleteMessage = async (req, res) => {
   try {
     const { messageId } = req.params
@@ -126,7 +108,6 @@ const deleteMessage = async (req, res) => {
       return res.status(404).json({ message: 'Message not found' })
     }
 
-    // Ensure the logged-in user is the sender
     if (message.senderId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'You are not authorized to delete this message' })
     }

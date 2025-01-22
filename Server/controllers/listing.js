@@ -1,4 +1,4 @@
-const Listing = require('../models/listing')
+const Listing = require('../models/Listing')
 const fs = require('fs')
 const path = require('path')
 const mongoose = require('mongoose')
@@ -29,16 +29,14 @@ const createListing = async (req, res) => {
 const getAllListings = async (req, res) => {
   try {
     const listings = await Listing.find()
-      .populate('userId', 'username _id')
-      .sort({ createdAt: -1 }) 
-    res.status(200).json(listings)
+      .populate('userId', 'username email')
+      .sort({ createdAt: -1 });
+    res.status(200).json(listings);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching listings', error: err.message })
+    res.status(500).json({ message: 'Error fetching listings', error: err.message });
   }
-}
+};
 
-
-  
 
 // Get a single listing by ID
 const getListingById = async (req, res) => {
@@ -56,30 +54,34 @@ const getListingById = async (req, res) => {
 const updateListing = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id)
-    if (!listing) return res.status(404).json({ message: 'Listing not found' })
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' })
+    }
 
     if (listing.userId.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized to edit this listing' })
     }
 
-    // Handle updated fields
-    const { title, description, price } = req.body
-    if (title) listing.title = title
-    if (description) listing.description = description
-    if (price) listing.price = price
+    listing.title = req.body.title || listing.title
+    listing.description = req.body.description || listing.description
+    listing.price = req.body.price || listing.price
 
-    // Handle new images
     if (req.files && req.files.length > 0) {
-      const imagePaths = req.files.map((file) => file.path)
-      listing.images = imagePaths
+      listing.images = req.files.map((file) => file.path)
     }
 
     await listing.save()
-    res.status(200).json(listing)
+
+    res.status(200).json({
+      message: 'Listing updated successfully',
+      listing,
+    })
   } catch (err) {
+    console.error('Error updating listing:', err.message)
     res.status(500).json({ message: 'Error updating listing', error: err.message })
   }
 }
+
 
 const deleteListing = async (req, res) => {
     try {
