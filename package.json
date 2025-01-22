@@ -9,7 +9,7 @@
     "dev": "nodemon server.js -e css,ejs,js,json"
   },
   "engines": {
-    "node": "18.x",
+    "node": "20.x",
     "npm": "11.x"
   },
   "keywords": [],
