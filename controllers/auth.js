@@ -52,21 +52,22 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Please provide username and password.' })
     }
 
+    // Find user by username
     const user = await User.findOne({ username })
-    if (!user || !(await user.comparePassword(password))){
+    if (!user) {
       return res.status(401).json({ message: 'Invalid username or password' })
     }
 
     const isMatch = await middleware.comparePassword(user.password, password)
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' })
+      return res.status(401).json({ message: 'Invalid username or password' })
     }
 
     // Create JWT payload
     const payload = { id: user._id, username: user.username }
 
     // Create Access Token + Refresh Token
-    const authToken = middleware.createToken(payload)         
+    const authToken = middleware.createToken(payload)
     const refreshToken = middleware.createRefreshToken(payload)
 
     // Return user + tokens
@@ -85,7 +86,6 @@ const loginUser = async (req, res) => {
     res.status(500).json({ message: 'Server Error', error: error.message })
   }
 }
-
 
 // Update User Profile and Password
 const updateUserProfile = async (req, res) => {
