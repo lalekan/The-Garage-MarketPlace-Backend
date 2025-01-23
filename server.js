@@ -9,14 +9,27 @@ const winston = require('winston')
 dotenv.config()
 const app = express()
 
+// Winston Logger
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
   transports: [new winston.transports.Console()],
 })
 
+// Updated CORS Configuration
+const allowedOrigins = [
+  'http://localhost:5173', // Local development
+  'https://leafy-muffin-35a7bf.netlify.app', // Deployed frontend
+]
+
 app.use(cors({
-  origin: 'http://localhost:5173', 
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, 
@@ -25,15 +38,13 @@ app.use(cors({
 // Middleware
 app.use(express.json())
 
-app.options('*', cors())
-
-
 // Routes
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 app.use('/api', AppRouter)
 
 app.get('/health', (req, res) => res.status(200).send('Healthy'))
 
+// Global Error Handling Middleware
 app.use((err, req, res, next) => {
   logger.error(err.message, err)
   res.status(500).json({ message: 'Internal Server Error', error: err.message })
@@ -48,7 +59,7 @@ mongoose.connect(process.env.MONGO_URI)
 const PORT = process.env.PORT || 3000
 const server = app.listen(PORT, () => logger.info(`Server running on port ${PORT}`))
 
-// Shutdown Server
+// Shutdown
 process.on('SIGINT', async () => {
   logger.info('Shutting down server...')
   await mongoose.connection.close()
