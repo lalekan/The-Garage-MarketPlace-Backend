@@ -1,13 +1,10 @@
 const Listing = require('../models/Listing')
-const fs = require('fs')
-const path = require('path')
 const mongoose = require('mongoose')
-
 
 // Create a new listing
 const createListing = async (req, res) => {
   try {
-    const images = req.files ? req.files.map((file) => file.path) : []
+    const images = req.files ? req.files.map((file) => `/uploads/${path.basename(file.path)}`) : [];
     const { title, description, price } = req.body
 
     const newListing = new Listing({
@@ -30,13 +27,12 @@ const getAllListings = async (req, res) => {
   try {
     const listings = await Listing.find()
       .populate('userId', 'username email')
-      .sort({ createdAt: -1 });
-    res.status(200).json(listings);
+      .sort({ createdAt: -1 })
+    res.status(200).json(listings)
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching listings', error: err.message });
+    res.status(500).json({ message: 'Error fetching listings', error: err.message })
   }
-};
-
+}
 
 // Get a single listing by ID
 const getListingById = async (req, res) => {
@@ -82,35 +78,33 @@ const updateListing = async (req, res) => {
   }
 }
 
-
+// Delete a listing
 const deleteListing = async (req, res) => {
-    try {
-      const { id } = req.params
-  
-      // Validate the ID
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'Invalid listing ID' })
-      }
-  
-      const listing = await Listing.findById(id)
-      if (!listing) {
-        return res.status(404).json({ message: 'Listing not found' })
-      }
-  
-      if (listing.userId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Unauthorized to delete this listing' })
-      }
-  
-      // Remove the listing
-      await Listing.deleteOne({ _id: id })
-  
-      res.status(200).json({ message: 'Listing deleted successfully' })
-    } catch (err) {
-      console.error('Error deleting listing:', err.message)
-      res.status(500).json({ message: 'Error deleting listing', error: err.message })
-    }
-  }
+  try {
+    const { id } = req.params
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid listing ID' })
+    }
+
+    const listing = await Listing.findById(id)
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' })
+    }
+
+    if (listing.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized to delete this listing' })
+    }
+
+    await Listing.deleteOne({ _id: id })
+    res.status(200).json({ message: 'Listing deleted successfully' })
+  } catch (err) {
+    console.error('Error deleting listing:', err.message)
+    res.status(500).json({ message: 'Error deleting listing', error: err.message })
+  }
+}
+
+// Module exports
 module.exports = {
   createListing,
   getAllListings,

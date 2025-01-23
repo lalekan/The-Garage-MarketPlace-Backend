@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // Set the filename of the uploaded image
-    cb(null, Date.now() + path.extname(file.originalname)) // Appending timestamp for unique filenames
+    cb(null, `${Date.now()}-${file.originalname}`)
   },
 })
 
@@ -27,8 +27,8 @@ const fileFilter = (req, file, cb) => {
 
 // Create the multer instance
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
+  storage,
+  fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // Max file size of 5MB
 })
 
