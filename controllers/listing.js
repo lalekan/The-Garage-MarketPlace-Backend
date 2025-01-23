@@ -1,11 +1,19 @@
 const Listing = require('../models/Listing')
+const path = require('path')
 const mongoose = require('mongoose')
 
 // Create a new listing
 const createListing = async (req, res) => {
   try {
-    const images = req.files ? req.files.map((file) => `/uploads/${path.basename(file.path)}`) : [];
+    const images = req.files
+      ? req.files.map((file) => path.join('uploads', path.basename(file.path)))
+      : []
+
     const { title, description, price } = req.body
+
+    if (!title || !description || !price) {
+      return res.status(400).json({ message: 'Title, description, and price are required.' })
+    }
 
     const newListing = new Listing({
       title,
@@ -18,6 +26,7 @@ const createListing = async (req, res) => {
     await newListing.save()
     res.status(201).json(newListing)
   } catch (err) {
+    console.error('Error creating listing:', err.message)
     res.status(500).json({ message: 'Error creating listing', error: err.message })
   }
 }

@@ -35,7 +35,8 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true)
       } else {
-        callback(new Error('Not allowed by CORS'))
+        logger.error(`Blocked by CORS: ${origin}`)
+        callback(new Error(`CORS Error: Origin ${origin} not allowed`))
       }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -43,6 +44,7 @@ app.use(
     credentials: true,
   })
 )
+
 
 // Middleware
 app.use(express.json())
@@ -56,12 +58,15 @@ app.get('/health', (req, res) => res.status(200).send('Healthy'))
 // Global Error Handling Middleware
 app.use((err, req, res, next) => {
   logger.error(err.message, err)
-  res.status(500).json({ message: 'Internal Server Error', error: err.message })
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  })
 })
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => logger.info('MongoDB connected'))
   .catch((err) => logger.error('MongoDB connection error:', err))
 
@@ -69,7 +74,7 @@ mongoose
 const PORT = process.env.PORT || 3000
 const server = app.listen(PORT, () => logger.info(`Server running on port ${PORT}`))
 
-// Shutdown Server
+// Shutdown
 process.on('SIGINT', async () => {
   logger.info('Shutting down server...')
   await mongoose.connection.close()

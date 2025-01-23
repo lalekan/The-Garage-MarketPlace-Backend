@@ -3,12 +3,9 @@ const path = require('path')
 
 // Define storage options for Multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Set the destination folder where images will be stored
-    cb(null, './uploads/')
-  },
+  destination: (req, file, cb) => cb(null, './uploads/'),
   filename: (req, file, cb) => {
-    // Set the filename of the uploaded image
+    cb(null, Date.now() + path.extname(file.originalname)) 
     cb(null, `${Date.now()}-${file.originalname}`)
   },
 })
@@ -27,8 +24,8 @@ const fileFilter = (req, file, cb) => {
 
 // Create the multer instance
 const upload = multer({
-  storage,
-  fileFilter,
+  storage: storage,
+  fileFilter: fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // Max file size of 5MB
 })
 
