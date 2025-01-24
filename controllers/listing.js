@@ -5,23 +5,24 @@ const mongoose = require('mongoose')
 // Create a new listing
 const createListing = async (req, res) => {
   try {
-    const images = req.files
-      ? req.files.map((file) => path.join('uploads', path.basename(file.path)))
-      : []
+    console.log('Request Body:', req.body)  
 
-    const { title, description, price } = req.body
-
+    const { title, description, price, imageUrls } = req.body
+    console.log(req.body, 'Body')
     if (!title || !description || !price) {
       return res.status(400).json({ message: 'Title, description, and price are required.' })
     }
 
+    console.log(imageUrls, "IMAGE URLS!!!!")
     const newListing = new Listing({
       title,
       description,
       price,
-      images,
-      userId: req.user.id,
+      images: imageUrls || [],
+      userId: req.user.id,  
     })
+
+    console.log('Stored Image URLs:', newListing.images)
 
     await newListing.save()
     res.status(201).json(newListing)
@@ -30,6 +31,7 @@ const createListing = async (req, res) => {
     res.status(500).json({ message: 'Error creating listing', error: err.message })
   }
 }
+
 
 // Get all listings
 const getAllListings = async (req, res) => {
