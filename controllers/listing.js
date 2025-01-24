@@ -5,15 +5,12 @@ const mongoose = require('mongoose')
 // Create a new listing
 const createListing = async (req, res) => {
   try {
-    console.log('Request Body:', req.body)  
-
     const { title, description, price, imageUrls } = req.body
-    console.log(req.body, 'Body')
+
     if (!title || !description || !price) {
       return res.status(400).json({ message: 'Title, description, and price are required.' })
     }
 
-    console.log(imageUrls, "IMAGE URLS!!!!")
     const newListing = new Listing({
       title,
       description,
@@ -21,8 +18,6 @@ const createListing = async (req, res) => {
       images: imageUrls || [],
       userId: req.user.id,  
     })
-
-    console.log('Stored Image URLs:', newListing.images)
 
     await newListing.save()
     res.status(201).json(newListing)
@@ -72,10 +67,7 @@ const updateListing = async (req, res) => {
     listing.title = req.body.title || listing.title
     listing.description = req.body.description || listing.description
     listing.price = req.body.price || listing.price
-
-    if (req.files && req.files.length > 0) {
-      listing.images = req.files.map((file) => file.path)
-    }
+    listing.images = req.body.imageUrls || listing.images
 
     await listing.save()
 

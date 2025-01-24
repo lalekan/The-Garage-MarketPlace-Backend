@@ -10,12 +10,6 @@ const fs = require('fs')
 dotenv.config()
 const app = express()
 
-// Ensure uploads directory exists
-const uploadDir = './uploads'
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir)
-}
-
 // Winston Logger
 const logger = winston.createLogger({
   level: 'info',
@@ -45,10 +39,10 @@ app.use(
   })
 )
 
+app.options('*', cors());
 
 // Middleware
 app.use(express.json())
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // Routes
 app.use('/api', AppRouter)
